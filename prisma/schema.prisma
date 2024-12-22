@@ -1,0 +1,155 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+//User model
+model User {
+    id Int @id @default(autoincrement())
+    firstName String
+    lastName String
+    userName String? @unique
+    email String @unique
+    password String 
+    isActivated Boolean @default(false)
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+    profilePicture String?
+    biography String?
+    phone String? @unique
+    questions Question []
+    savedItems SavedItem []
+    answers Answer []
+    badges Badge []
+    userBadges UserBadge []
+    notifications Notification []
+    sentMessages Message[] @relation("SentMessages")
+    receivedMessages Message[] @relation("ReceivedMessages")
+    votes Vote[]
+    searchLogs SearchLog[]
+}
+
+//Notification model
+model Notification{
+    id Int @id @default(autoincrement())
+    type String
+    content String
+    userId Int
+    user User @relation(fields: [userId], references: [id])
+    createdAt DateTime @default(now())
+    isRead Boolean @default(false)
+}
+
+//Message model
+model Message {
+   id Int @id @default(autoincrement())
+   sender_id Int 
+   sender User @relation("SentMessages",fields: [sender_id] , references: [id]) 
+   receiver_id Int
+   receiver User @relation("ReceivedMessages",fields: [receiver_id], references: [id])
+   content String
+   createdAt DateTime @default(now())
+
+}
+//Badge model
+model Badge {
+    id Int @id @default(autoincrement())
+    name String
+    description String
+    users User[]
+    userBadges UserBadge[]
+}
+
+//UserBadge model
+model UserBadge {
+    userId Int
+    user User @relation(fields: [userId], references: [id])
+    badgeId Int
+    badge Badge @relation(fields: [badgeId], references: [id])
+    @@id([userId, badgeId])
+}
+
+//Question model
+model Question {
+    id Int @id @default(autoincrement())
+    title String
+    description String 
+    createdAt DateTime @default(now())
+    userId Int
+    user User @relation(fields: [userId], references: [id])
+    answers Answer[]
+    questionTags QuestionTag[]
+    pictures Picture[]
+    savedItems SavedItem[]
+}
+
+//Answer model 
+model Answer {
+  id Int @id @default(autoincrement())
+  content String
+  userId Int
+  user User @relation(fields: [userId] , references: [id])
+  questionId Int
+  question Question @relation(fields: [questionId], references: [id])
+  votes Vote[]
+}
+//Vote model 
+model Vote {
+  userId Int
+  user User @relation(fields: [userId], references: [id])
+  answerId Int
+  answer Answer @relation(fields: [answerId], references: [id])
+  isUpvote Boolean
+  @@id([userId, answerId])
+}
+//Tag model 
+model Tag {
+  id Int @id @default(autoincrement())
+  name String
+  questionTags QuestionTag[]
+}
+
+//QuestionTag model
+model QuestionTag {
+  questionId Int
+  question Question @relation(fields: [questionId], references: [id])
+  tagId Int
+  tag Tag @relation(fields: [tagId], references: [id])
+  @@id([questionId, tagId])
+}
+//Saved items model
+model SavedItem{
+  id Int @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  userId Int
+  user User @relation(fields: [userId], references: [id])
+  questionId Int
+  question Question @relation(fields: [questionId], references: [id]) 
+}
+
+//Picture model
+model Picture {
+  id Int @id @default(autoincrement())
+  url String
+  questionId Int 
+  question Question @relation(fields: [questionId], references: [id])
+}
+
+//Seachlog model
+model SearchLog {
+  id Int @id @default(autoincrement())
+  userId Int
+  user User @relation(fields: [userId], references: [id])
+  searchQuery String
+  createdAt DateTime @default(now())
+}
