@@ -1,5 +1,4 @@
 const prisma = require('../../prismaClient');
-const sendConfirmationEmail = require('./confirmEmail');
 const CustomError = require('./customError');
 // Validate user name 
 exports.isValideUserName =async (userName)=>{
@@ -8,7 +7,7 @@ exports.isValideUserName =async (userName)=>{
      if (!regex.test(userName)){
          throw new CustomError({message: 'Invalid user name', status : 400} );
      }
-    const user = await prisma.User.findUnique({
+    const user = await prisma.user.findUnique({
         where: {
             userName: userName
         }

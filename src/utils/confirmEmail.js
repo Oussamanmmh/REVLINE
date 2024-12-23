@@ -1,15 +1,5 @@
 const nodemailer = require('nodemailer');
-
-const emailConfig = {
-    host: process.env.EMAIL_HOST,
-    port: process.env.EMAIL_PORT,
-    secure: false,
-    auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS
-    }
-}
-
+const emailConfig = require('../config/email.config')
 const transporter = nodemailer.createTransport(emailConfig);
 
 const sendConfirmationEmail = async (email, token) => {

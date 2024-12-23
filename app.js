@@ -1,10 +1,16 @@
 //Reuirements
 const express = require('express');
 const cors = require('cors');
+const { join } = require('path');
 const bodyParser = require('body-parser');
-const morgan = require('morgan');
+const logger = require('morgan');
 const helmet = require('helmet');
+const cookieParser = require('cookie-parser');
+const passport = require('passport');
+const session = require('express-session');
 const authRoutes = require('./src/routes/authRoutes')
+const prisma = require('./prismaClient')
+require('./src/middlewares/passportSetup')
 
 //Express app initialization
 const app = express();
@@ -13,11 +19,14 @@ const app = express();
 app.use(helmet());
 app.use(cors());
 app.use(bodyParser.json());
-app.use(morgan('dev'));
+app.use(logger('dev'));
+app.use(cookieParser());
 
 //Routes
 
-app.use('/api/auth' , authRoutes)
+app.use('/auth' , authRoutes)
+// Handle WebSocket connections
+
 
 //Error handling
 app.use((err, req, res, next) => {
@@ -32,7 +41,7 @@ app.use((req, res) => {
 
 //Disconnect from database and exit process
 process.on('SIGINT', async () => {
-    await exports.prisma.$disconnect();
+    await prisma.$disconnect();
     process.exit();
 });
 //Export app

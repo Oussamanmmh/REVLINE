@@ -50,23 +50,23 @@ exports.registerUser = async (req, res) => {
         });
         const accessToken = generateAccessToken(user.id)
         const refreshToken = generateRefreshToken(user.id)
-        await sendConfirmationEmail(email , accessToken) ;
+       await sendConfirmationEmail(email , accessToken) ;
 
         
         res.cookie('access_token', accessToken, {
             httpOnly: true,
-            secure: true,
+            secure: false,
             sameSite: 'Lax',
-        }, { maxAge:process.env.JWT_ACCESS_EXPIRE_IN})
+            maxAge: 60*60*24 // 1 minute
+        })
     
         res.cookie('refresh_token', refreshToken, {
             httpOnly: true,
-            secure: true,
+            secure: false,
             sameSite: 'Lax',
+            maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
            
-        },{
-            maxAge: process.env.JWT_REFRESH_EXPIRE_IN
-        });
+         });
         
         res.status(201).json({message : 'you have registered successfully'});
             
@@ -82,7 +82,7 @@ exports.registerUser = async (req, res) => {
 
 exports.confirmUser=async(req,res)=>{
     const {token} = req.params
-    console.log(token)
+    console.log(req.cookies)
     try{
         const decoded = jwt.verify(token , process.env.JWT_SECRET)
          user = await prisma.user.update({
