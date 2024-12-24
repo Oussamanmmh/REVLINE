@@ -1,4 +1,5 @@
 const jwt = require('jsonwebtoken');
+const CustomError = require('./customError');
 
 
 //function to generate the access token
@@ -34,6 +35,6 @@ exports.decodeToken=(token)=>{
         return decode.id
     }
     catch(e){
-        throw new Error(e)
+        throw new CustomError({status : 401 , message : 'Invalid token'})
     }
 }

@@ -86,6 +86,42 @@ exports.registerUser = async (req, res) => {
     }
 };
 
+exports.loginUser = async (req ,res)=>{
+    const {email , password} = req.body 
+    console.log(req.body)
+    try{
+        const user = await prisma.user.findUnique({
+            where:{
+                email
+            }
+        })
+        if(!user)return res.status(404).json({message:"User not found"})
+        if(!user.password) return res.status(400).json({message:"Password incorect"})
+        const isMatch = bcrypt.compare(user.password , password)
+        if(!isMatch) return res.status(400).json({message:"Password incorect"})
+        
+        const accessToken = generateAccessToken(user.id)
+        const refreshToken = generateRefreshToken(user.id)
+        res.cookie('access_token', accessToken, {
+            httpOnly: true,
+            secure: false,
+            sameSite: 'Lax',
+            maxAge: 1000 * 60 * 60 * 24 
+        })
+        res.cookie('refresh_token', refreshToken, {
+            httpOnly: true,
+            secure: false,
+            sameSite: 'Lax',
+            maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+           
+         });
+        res.status(200).json({message:"Login success"})
+
+
+    }catch(e){
+        console.log(e)
+    }
+}
 
 exports.confirmUser=async(req,res)=>{
     const {token} = req.params

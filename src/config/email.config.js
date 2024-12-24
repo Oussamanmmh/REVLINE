@@ -1,4 +1,4 @@
-exports.emailConfig = {
+const emailConfig = {
     host: process.env.EMAIL_HOST,
     port: process.env.EMAIL_PORT,
     secure: false,
@@ -7,3 +7,5 @@ exports.emailConfig = {
         pass: process.env.EMAIL_PASS
     }
 }
+
+module.exports = emailConfig;

@@ -3,7 +3,7 @@ const passport = require('passport');
 const session = require('express-session');
 const prisma = require('../../prismaClient')
 require('../middlewares/passportSetup');
-const { registerUser, confirmUser } = require('../controllers/authController');
+const { registerUser, confirmUser, loginUser } = require('../controllers/authController');
 const router = express.Router() ;
 const {check} = require('express-validator')
 
@@ -24,8 +24,9 @@ const validatePassword = check("password")
     .notEmpty().withMessage("Password is required ")
     .isLength({ min: 8 }).withMessage("Password must be at least 8 characters long")
 
-router.post('/register'  ,[validateEmail , validatePassword],registerUser) ;
+router.post('/register'  ,[validateEmail , validatePassword],registerUser) 
 router.get('/email-confirmation/:token' ,confirmUser)
+router.post('/login', [validatePassword], loginUser)
 
 router.use(
     session({

@@ -1,6 +1,7 @@
 const prisma = require('../../prismaClient')
 const { validationResult } = require('express-validator');
-const questionQuery = require('../utils/searchQuery')
+const questionQuery = require('../utils/searchQuery');
+const { decodeToken } = require('../utils/jwt');
 
 //add new question
 const addQuestion =async (req , res)=>{  
@@ -17,15 +18,14 @@ const addQuestion =async (req , res)=>{
         description , 
         tags 
     } = req.body ;
-    console.log(tags)
-
+        const token = req.cookies.access_token
     try {
-       
+        const userId = decodeToken(token)
         const question = await prisma.question.create({
             data:{
                 title,
                 description,
-                userId :13
+                userId
             }
         })
         if(tags.length !== 0){
@@ -41,39 +41,48 @@ const addQuestion =async (req , res)=>{
         res.status(201).json({message:'Question added successfully'})
     } catch (error) {
         console.log(error)
-        res.status(500).json({message:'Internal server error'})
+        res.status(error.status || 500).json({message:error.message || 'Internal server error'})
     }
 }
 //answer a question 
 const answerQuestion = async (req , res)=>{
     const {questionId} = req.params 
     const {content} = req.body
-    try {
-        const answer = await prisma.answer.create({
+    const token = req.cookies.access_token
+    try {  
+        if(!content)return res.status(400).json({message:"Please , complete your answer"}) 
+        const userId = decodeToken(token)
+        await prisma.answer.create({
             data:{
                 content,
-                userId :13,
-                questionId :  parseInt(questionId)
+                userId :parseInt(userId),
+                questionId : parseInt(questionId)
+            }
+        })
+        await prisma.notification.create({
+            data:{
+                type:"New answer",
+
             }
         })
         res.status(201).json({message:'Answer added successfully'})
     } catch (error) {
         console.log(error)
-        res.status(500).json({message:'Internal server error'})
+        res.status(error.status || 500).json({message:error.message || 'Internal server error'})
     }}
 
 
 //Vote on a answer 
 const voteAnswer = async (req, res)=>{
     const {answerId , isUpvote} = req.query
-    console.log(answerId)
-    console.log(isUpvote)
+    const token = req.cookies.access_token
     try{
+        const userId  = decodeToken(token)
         const vote = await prisma.vote.create({
             data:{
                 answerId:parseInt(answerId),
                 isUpvote : isUpvote === 'true' ? true : false,
-                userId:13
+                userId
             }
         })
         return res.status(201).json({message:'Vote added successfully'})
@@ -81,6 +90,27 @@ const voteAnswer = async (req, res)=>{
         return res.status(500).json({message: e.message})
     }
 }
+
+
+//remove vote 
+const removeVote = async(req,res)=>{
+    const {answerId} = req.query
+    try{
+        await prisma.vote.update({
+            where:{
+                userId:13 ,
+                answerId:parseInt(answerId)
+            },
+            data:{
+                isUpvote:false
+            }
+        })
+    }
+    catch(e){
+        return res.status(500).json({message: e.message})
+    }
+}
+
 
 //Get all the questions
 const getAllQuestions=async(req,res)=>{
@@ -99,6 +129,39 @@ const getAllQuestions=async(req,res)=>{
         return res.status(500).json({message: e.message})
      }
     }
+
+//Get questions by user 
+const getQuestionByUser =  async (req , res)=>{
+    const {userId} = req.params 
+    try{    
+        user = await prisma.user.findUnique({
+            where:{
+                id :userId
+            }
+        })
+        if (!user){
+            return res.status(402).json({message :"User not found"})
+        }
+        const questions = await prisma.question.findMany({
+            where:{
+                userId:parent(userId)
+            },
+            ...questionQuery ,
+            orderBy:{
+                createdAt:'desc'
+            }
+        }
+        )
+        if (questions.length === 0)
+        {
+            return res.status(404).json({message:"There is no question"})
+        }
+        return res.status(200).json({questions:questions})
+    }
+    catch(e){
+        return res.status(500).json({message :"Server error"})
+    }
+}
 //Get a specific question
 const getQuestion = async (req , res)=>{
     const {questionId} = req.params 
