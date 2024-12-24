@@ -46,7 +46,7 @@ model Notification{
     type String
     content String
     userId Int
-    user User @relation(fields: [userId], references: [id])
+    user User @relation(fields: [userId], references: [id] ,onDelete: Cascade)
     createdAt DateTime @default(now())
     isRead Boolean @default(false)
 }
@@ -55,9 +55,9 @@ model Notification{
 model Message {
    id Int @id @default(autoincrement())
    sender_id Int 
-   sender User @relation("SentMessages",fields: [sender_id] , references: [id]) 
+   sender User @relation("SentMessages",fields: [sender_id] , references: [id] , onDelete: Cascade) 
    receiver_id Int
-   receiver User @relation("ReceivedMessages",fields: [receiver_id], references: [id])
+   receiver User @relation("ReceivedMessages",fields: [receiver_id], references: [id] , onDelete: Cascade)
    content String
    createdAt DateTime @default(now())
 
@@ -74,9 +74,9 @@ model Badge {
 //UserBadge model
 model UserBadge {
     userId Int
-    user User @relation(fields: [userId], references: [id])
+    user User @relation(fields: [userId], references: [id] , onDelete: Cascade)
     badgeId Int
-    badge Badge @relation(fields: [badgeId], references: [id])
+    badge Badge @relation(fields: [badgeId], references: [id] , onDelete: Cascade)
     @@id([userId, badgeId])
 }
 
@@ -87,7 +87,7 @@ model Question {
     description String 
     createdAt DateTime @default(now())
     userId Int
-    user User @relation(fields: [userId], references: [id])
+    user User @relation(fields: [userId], references: [id] , onDelete: Cascade)
     answers Answer[]
     questionTags QuestionTag[]
     pictures Picture[]
@@ -98,34 +98,36 @@ model Question {
 model Answer {
   id Int @id @default(autoincrement())
   content String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
   userId Int
-  user User @relation(fields: [userId] , references: [id])
+  user User @relation(fields: [userId] , references: [id],onDelete: Cascade)
   questionId Int
-  question Question @relation(fields: [questionId], references: [id])
+  question Question @relation(fields: [questionId], references: [id] , onDelete: Cascade)
   votes Vote[]
 }
 //Vote model 
 model Vote {
   userId Int
-  user User @relation(fields: [userId], references: [id])
+  user User @relation(fields: [userId], references: [id] , onDelete: Cascade)
   answerId Int
-  answer Answer @relation(fields: [answerId], references: [id])
-  isUpvote Boolean
+  answer Answer @relation(fields: [answerId], references: [id] ,onDelete: Cascade)
+  isUpvote Boolean?
   @@id([userId, answerId])
 }
 //Tag model 
 model Tag {
   id Int @id @default(autoincrement())
-  name String
+  name String @unique 
   questionTags QuestionTag[]
 }
 
 //QuestionTag model
 model QuestionTag {
   questionId Int
-  question Question @relation(fields: [questionId], references: [id])
+  question Question @relation(fields: [questionId], references: [id] , onDelete: Cascade)
   tagId Int
-  tag Tag @relation(fields: [tagId], references: [id])
+  tag Tag @relation(fields: [tagId], references: [id]  , onDelete: Cascade)
   @@id([questionId, tagId])
 }
 //Saved items model
@@ -133,9 +135,9 @@ model SavedItem{
   id Int @id @default(autoincrement())
   createdAt DateTime @default(now())
   userId Int
-  user User @relation(fields: [userId], references: [id])
+  user User @relation(fields: [userId], references: [id] , onDelete:Cascade)
   questionId Int
-  question Question @relation(fields: [questionId], references: [id]) 
+  question Question @relation(fields: [questionId], references: [id] , onDelete: Cascade) 
 }
 
 //Picture model
@@ -143,14 +145,14 @@ model Picture {
   id Int @id @default(autoincrement())
   url String
   questionId Int 
-  question Question @relation(fields: [questionId], references: [id])
+  question Question @relation(fields: [questionId], references: [id] , onDelete: Cascade)
 }
 
 //Seachlog model
 model SearchLog {
   id Int @id @default(autoincrement())
   userId Int
-  user User @relation(fields: [userId], references: [id])
+  user User @relation(fields: [userId], references: [id] ,onDelete: Cascade)
   searchQuery String
   createdAt DateTime @default(now())
 }

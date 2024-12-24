@@ -1,5 +1,6 @@
 const jwt = require('jsonwebtoken');
 
+
 //function to generate the access token
 exports.generateAccessToken=(usedId)=>{
     return jwt.sign({
@@ -24,4 +25,15 @@ exports.generateRefreshToken=(usedId)=>{
     }
    )
  
+}
+
+exports.decodeToken=(token)=>{
+   
+    try{
+        const decode = jwt.verify(token , process.env.JWT_SECRET)
+        return decode.id
+    }
+    catch(e){
+        throw new Error(e)
+    }
 }

@@ -33,6 +33,7 @@ passport.use(
                         firstName: profile.name.givenName,
                         userName ,
                         lastName: profile.name.familyName,
+                        isActivated:true
                     },
                 });
                 return done(null, newUser);

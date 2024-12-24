@@ -8,10 +8,12 @@ const helmet = require('helmet');
 const cookieParser = require('cookie-parser');
 const passport = require('passport');
 const session = require('express-session');
-const authRoutes = require('./src/routes/authRoutes')
 const prisma = require('./prismaClient')
 require('./src/middlewares/passportSetup')
 
+//Routes import
+const authRoutes = require('./src/routes/authRoutes')
+const questionRoutes = require('./src/routes/questionRoutes')
 //Express app initialization
 const app = express();
 
@@ -25,6 +27,7 @@ app.use(cookieParser());
 //Routes
 
 app.use('/auth' , authRoutes)
+app.use('/questions' , questionRoutes)
 // Handle WebSocket connections
 
 

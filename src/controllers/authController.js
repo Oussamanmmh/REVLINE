@@ -34,7 +34,7 @@ exports.registerUser = async (req, res) => {
         else{
               genUserName = await generateUserName(firstName, lastName);
         }
-        
+
         // Hash the password
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt);
