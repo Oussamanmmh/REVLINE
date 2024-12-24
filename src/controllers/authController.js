@@ -15,7 +15,7 @@ exports.registerUser = async (req, res) => {
         return res.status(400).json({
             status: 'failed',
             message: 'Validation Error',
-            errors: errors.array()
+            errors: errors.array().map(error => {return {message :error.msg}})
         });
     }
     // Destructure the request body
@@ -27,19 +27,19 @@ exports.registerUser = async (req, res) => {
         password,
     } = req.body;
     let genUserName ;
+    let user ;
     try {
         if(userName){
               await isValideUserName(userName);}
         else{
               genUserName = await generateUserName(firstName, lastName);
         }
-        await isValideEmail(email);
-
+        
         // Hash the password
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt);
         
-        const user = await prisma.user.create({
+        user = await prisma.user.create({
             data: {
                 firstName,
                 lastName,
@@ -57,7 +57,7 @@ exports.registerUser = async (req, res) => {
             httpOnly: true,
             secure: false,
             sameSite: 'Lax',
-            maxAge: 60*60*24 // 1 minute
+            maxAge: 60*60*24 
         })
     
         res.cookie('refresh_token', refreshToken, {
@@ -73,6 +73,13 @@ exports.registerUser = async (req, res) => {
 
     } catch (error) {
         console.log(error);
+        if(user){
+            await prisma.user.delete({
+                where:{
+                    id: user.id
+                }
+            })
+        }
         return res.status(error.status || 500).json({
             error: error.message
         });

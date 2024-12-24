@@ -15,7 +15,7 @@ const sendConfirmationEmail = async (email, token) => {
         console.log('Email sent successfully');
     }catch (error) {
         console.error('Error sending email:', error);
-        throw new Error('Error sending email');
+        throw new Error('Error sending you an email , your address email might does not exist ');
       }
     }
 
