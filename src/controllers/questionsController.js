@@ -2,6 +2,7 @@ const prisma = require('../../prismaClient')
 const { validationResult } = require('express-validator');
 const questionQuery = require('../utils/searchQuery');
 const { decodeToken } = require('../utils/jwt');
+const { NotificationType } = require('@prisma/client');
 
 //add new question
 const addQuestion =async (req , res)=>{  
@@ -52,19 +53,34 @@ const answerQuestion = async (req , res)=>{
     try {  
         if(!content)return res.status(400).json({message:"Please , complete your answer"}) 
         const userId = decodeToken(token)
-        await prisma.answer.create({
+        const newAnswer = await prisma.answer.create({
             data:{
                 content,
                 userId :parseInt(userId),
                 questionId : parseInt(questionId)
+            },
+        })
+        const questionTarget = await prisma.question.findUnique({ 
+            where:{
+                id:parseInt(questionId)
             }
         })
+        
+        if(questionTarget.userId !== parseInt(userId))
+        {
         await prisma.notification.create({
             data:{
-                type:"New answer",
-
+                fromUserId:parseInt(userId),
+                type:NotificationType.NEW_ANSWER,
+                userTargetId: questionTarget.userId,
+                metaData:JSON.stringify({
+                    questionId:questionTarget.id,
+                    answerId: newAnswer.id
+                }),
+                content:`Your question "${questionTarget.title}" has a new answer from ${prisma.user.findUnique({where:{id:parseInt(userId)},select:{userName:true}})}`
             }
         })
+    }
         res.status(201).json({message:'Answer added successfully'})
     } catch (error) {
         console.log(error)
@@ -90,7 +106,6 @@ const voteAnswer = async (req, res)=>{
         return res.status(500).json({message: e.message})
     }
 }
-
 
 //remove vote 
 const removeVote = async(req,res)=>{
@@ -162,6 +177,7 @@ const getQuestionByUser =  async (req , res)=>{
         return res.status(500).json({message :"Server error"})
     }
 }
+
 //Get a specific question
 const getQuestion = async (req , res)=>{
     const {questionId} = req.params 

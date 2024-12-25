@@ -38,15 +38,25 @@ model User {
     receivedMessages Message[] @relation("ReceivedMessages")
     votes Vote[]
     searchLogs SearchLog[]
+    notificationsFromUser Notification[] @relation("NotificationFromUser")
 }
 
+//type of notification
+enum NotificationType {
+    NEW_ANSWER
+    NEW_BADGE
+    NEW_VOTE
+}
 //Notification model
 model Notification{
     id Int @id @default(autoincrement())
-    type String
+    type NotificationType
     content String
-    userId Int
-    user User @relation(fields: [userId], references: [id] ,onDelete: Cascade)
+    metaData Json?
+    fromUserId Int?
+    fromUser User? @relation("NotificationFromUser",fields: [fromUserId], references: [id] ,onDelete: Cascade)
+    userTargetId Int
+    user User @relation(fields: [userTargetId], references: [id] ,onDelete: Cascade)
     createdAt DateTime @default(now())
     isRead Boolean @default(false)
 }
