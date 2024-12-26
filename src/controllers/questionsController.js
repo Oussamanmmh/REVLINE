@@ -2,8 +2,6 @@ const prisma = require('../../prismaClient')
 const { validationResult } = require('express-validator');
 const questionQuery = require('../utils/searchQuery');
 const { decodeToken } = require('../utils/jwt');
-const { NotificationType } = require('@prisma/client');
-
 //add new question
 const addQuestion =async (req , res)=>{  
     const errors = validationResult(req);
@@ -45,83 +43,38 @@ const addQuestion =async (req , res)=>{
         res.status(error.status || 500).json({message:error.message || 'Internal server error'})
     }
 }
-//answer a question 
-const answerQuestion = async (req , res)=>{
-    const {questionId} = req.params 
-    const {content} = req.body
-    const token = req.cookies.access_token
-    try {  
-        if(!content)return res.status(400).json({message:"Please , complete your answer"}) 
-        const userId = decodeToken(token)
-        const newAnswer = await prisma.answer.create({
-            data:{
-                content,
-                userId :parseInt(userId),
-                questionId : parseInt(questionId)
-            },
-        })
-        const questionTarget = await prisma.question.findUnique({ 
-            where:{
-                id:parseInt(questionId)
-            }
-        })
-        
-        if(questionTarget.userId !== parseInt(userId))
-        {
-        await prisma.notification.create({
-            data:{
-                fromUserId:parseInt(userId),
-                type:NotificationType.NEW_ANSWER,
-                userTargetId: questionTarget.userId,
-                metaData:JSON.stringify({
-                    questionId:questionTarget.id,
-                    answerId: newAnswer.id
-                }),
-                content:`Your question "${questionTarget.title}" has a new answer from ${prisma.user.findUnique({where:{id:parseInt(userId)},select:{userName:true}})}`
-            }
-        })
-    }
-        res.status(201).json({message:'Answer added successfully'})
-    } catch (error) {
-        console.log(error)
-        res.status(error.status || 500).json({message:error.message || 'Internal server error'})
-    }}
-
-
-//Vote on a answer 
-const voteAnswer = async (req, res)=>{
-    const {answerId , isUpvote} = req.query
-    const token = req.cookies.access_token
-    try{
-        const userId  = decodeToken(token)
-        const vote = await prisma.vote.create({
-            data:{
-                answerId:parseInt(answerId),
-                isUpvote : isUpvote === 'true' ? true : false,
-                userId
-            }
-        })
-        return res.status(201).json({message:'Vote added successfully'})
-    }catch(e){
-        return res.status(500).json({message: e.message})
-    }
-}
 
 //remove vote 
 const removeVote = async(req,res)=>{
-    const {answerId} = req.query
+    const {answerId} = req.params
     try{
-        await prisma.vote.update({
+        const userId = decodeToken(req.cookies.access_token)
+        const vote = await prisma.vote.findUnique({
             where:{
-                userId:13 ,
-                answerId:parseInt(answerId)
-            },
-            data:{
-                isUpvote:false
+                userId_answerId:{
+                    userId ,
+                    answerId:parseInt(answerId)
+                }
             }
         })
+
+        if (!vote){
+            return res.status(404).json({message:'Vote not found'})
+        }
+        vote = await prisma.vote.delete({
+            where:{
+                userId_answerId:{
+                    userId,
+                    answerId:parseInt(answerId)
+                }
+            }
+        })
+        //remove the notification
+       
+        return res.status(200).json({message:'Vote removed successfully'})
     }
     catch(e){
+        console.error(e)
         return res.status(500).json({message: e.message})
     }
 }
@@ -196,4 +149,8 @@ const getQuestion = async (req , res)=>{
         return res.status(500).json({message: e.message})
     }
 }
-module.exports = {addQuestion , getAllQuestions , answerQuestion ,voteAnswer , getQuestion}
+module.exports = {
+    addQuestion , 
+    getAllQuestions ,
+    getQuestion,
+    removeVote,}

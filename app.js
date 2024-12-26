@@ -14,6 +14,8 @@ require('./src/middlewares/passportSetup')
 //Routes import
 const authRoutes = require('./src/routes/authRoutes')
 const questionRoutes = require('./src/routes/questionRoutes')
+const notificationsRoutes = require('./src/routes/notificationsRoutes')
+const answersRoutes = require('./src/routes/answersRoutes')
 //Express app initialization
 const app = express();
 
@@ -28,6 +30,8 @@ app.use(cookieParser());
 
 app.use('/auth' , authRoutes)
 app.use('/questions' , questionRoutes)
+app.use('/answers' , answersRoutes)
+app.use('/notifications' ,notificationsRoutes)
 // Handle WebSocket connections
 
 

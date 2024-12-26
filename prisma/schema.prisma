@@ -55,6 +55,7 @@ model Notification{
     metaData Json?
     fromUserId Int?
     fromUser User? @relation("NotificationFromUser",fields: [fromUserId], references: [id] ,onDelete: Cascade)
+    contentTargetId Int ?
     userTargetId Int
     user User @relation(fields: [userTargetId], references: [id] ,onDelete: Cascade)
     createdAt DateTime @default(now())
