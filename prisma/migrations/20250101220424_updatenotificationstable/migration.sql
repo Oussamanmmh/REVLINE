@@ -1,3 +1,9 @@
+-- CreateEnum
+CREATE TYPE "NotificationType" AS ENUM ('NEW_ANSWER', 'NEW_BADGE', 'NEW_VOTE');
+
+-- CreateEnum
+CREATE TYPE "TargetEntityType" AS ENUM ('QUESTION', 'ANSWER', 'VOTE', 'BADGE', 'MESSAGE');
+
 -- CreateTable
 CREATE TABLE "User" (
     "id" SERIAL NOT NULL,
@@ -20,11 +26,15 @@ CREATE TABLE "User" (
 -- CreateTable
 CREATE TABLE "Notification" (
     "id" SERIAL NOT NULL,
-    "type" TEXT NOT NULL,
+    "type" "NotificationType" NOT NULL,
     "content" TEXT NOT NULL,
-    "userId" INTEGER NOT NULL,
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "metaData" JSONB,
+    "actorId" INTEGER,
+    "targetUserId" INTEGER NOT NULL,
+    "targetEntityId" INTEGER,
+    "targetEntityType" "TargetEntityType",
     "isRead" BOOLEAN NOT NULL DEFAULT false,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "Notification_pkey" PRIMARY KEY ("id")
 );
@@ -84,7 +94,7 @@ CREATE TABLE "Answer" (
 CREATE TABLE "Vote" (
     "userId" INTEGER NOT NULL,
     "answerId" INTEGER NOT NULL,
-    "isUpvote" BOOLEAN NOT NULL,
+    "isUpvote" BOOLEAN,
 
     CONSTRAINT "Vote_pkey" PRIMARY KEY ("userId","answerId")
 );
@@ -161,7 +171,10 @@ CREATE UNIQUE INDEX "Tag_name_key" ON "Tag"("name");
 CREATE INDEX "_BadgeToUser_B_index" ON "_BadgeToUser"("B");
 
 -- AddForeignKey
-ALTER TABLE "Notification" ADD CONSTRAINT "Notification_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "Notification" ADD CONSTRAINT "Notification_actorId_fkey" FOREIGN KEY ("actorId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Notification" ADD CONSTRAINT "Notification_targetUserId_fkey" FOREIGN KEY ("targetUserId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Message" ADD CONSTRAINT "Message_sender_id_fkey" FOREIGN KEY ("sender_id") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;

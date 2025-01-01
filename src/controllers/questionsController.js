@@ -101,18 +101,20 @@ const getAllQuestions=async(req,res)=>{
 //Get questions by user 
 const getQuestionByUser =  async (req , res)=>{
     const {userId} = req.params 
-    try{    
+    try{
+
         user = await prisma.user.findUnique({
             where:{
-                id :userId
+                id :parseInt(userId)
             }
         })
         if (!user){
             return res.status(402).json({message :"User not found"})
         }
+        
         const questions = await prisma.question.findMany({
             where:{
-                userId:parent(userId)
+                userId:parseInt(userId)
             },
             ...questionQuery ,
             orderBy:{
@@ -120,6 +122,7 @@ const getQuestionByUser =  async (req , res)=>{
             }
         }
         )
+   
         if (questions.length === 0)
         {
             return res.status(404).json({message:"There is no question"})
@@ -127,6 +130,7 @@ const getQuestionByUser =  async (req , res)=>{
         return res.status(200).json({questions:questions})
     }
     catch(e){
+        console.log(e)
         return res.status(500).json({message :"Server error"})
     }
 }
@@ -153,4 +157,7 @@ module.exports = {
     addQuestion , 
     getAllQuestions ,
     getQuestion,
-    removeVote,}
+    removeVote,
+    getQuestionByUser ,
+
+}

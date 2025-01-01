@@ -5,7 +5,8 @@ const prisma = require('../../prismaClient')
 require('../middlewares/passportSetup');
 const { registerUser, confirmUser, loginUser } = require('../controllers/authController');
 const router = express.Router() ;
-const {check} = require('express-validator')
+const {check} = require('express-validator');
+const { generateAccessToken, generateRefreshToken } = require('../utils/jwt');
 
 const validateEmail = check("email")
     .notEmpty().withMessage("Email is required ")
@@ -38,8 +39,27 @@ router.use(
 router.use(passport.initialize())
 router.use(passport.session())
 router.get('/google',passport.authenticate('google',{scope:['profile','email']}), )
-router.get('/google/callback',passport.authenticate('google',{failureRedirect:'/login'}),(req,res)=>{
-    res.json(req.user)
+router.get('/google/callback', 
+    passport.authenticate('google',
+        {failureRedirect:'/login'}),
+        (req,res)=>{
+    const accessToken = generateAccessToken(req.user.id)
+    const refreshToken = generateRefreshToken(req.user.id)
+    res.cookie('access_token', accessToken, {
+        httpOnly: true,
+        secure: false,
+        sameSite: 'Lax',
+        maxAge: 1000 * 60 * 60 * 24 
+    })
+    res.cookie('refresh_token', refreshToken, {
+        httpOnly: true,
+        secure: false,
+        sameSite: 'Lax',
+        maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+       
+     });
+    res.status(200).json({message:"Login success"})
+    
 })
 
 

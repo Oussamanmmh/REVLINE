@@ -13,10 +13,6 @@ passport.use(
         },
         async (accessToken, refreshToken, profile, done) => {
             try {
-                console.log("the acces token :")
-                console.log(accessToken ,'\n')
-                console.log("the refresh token :")
-                console.log(refreshToken,'\n')
                 const user = await prisma.user.findUnique({
                     where: {
                         email: profile.emails[0].value,

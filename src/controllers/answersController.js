@@ -1,4 +1,4 @@
-const { NotificationType } = require('@prisma/client');
+const { NotificationType, TargetEntityType } = require('@prisma/client');
 const prisma = require('../../prismaClient')
 const { decodeToken } = require("../utils/jwt");
 const subscribers = require('../services/subscribe');
@@ -34,7 +34,7 @@ const answerQuestion = async (req, res) => {
         })
 
       // Send a notification only if the answerer is not the question owner
-      if (questionTarget && questionTarget.userId !== userId) {
+      if ( questionTarget.userId !== userId) {
         let notification ;
         // Send a notification to the question owner
         const userName = (await prisma.user.findUnique({
@@ -44,13 +44,11 @@ const answerQuestion = async (req, res) => {
         console.log(userName)
         notification = await prisma.notification.create({
             data: {
-              fromUserId: userId,
+              actorId: userId,
               type: NotificationType.NEW_ANSWER,
-              userTargetId: questionTarget.userId,
-              metaData: JSON.stringify({
-                  questionConcerenedId: questionIdInt, 
-              }),
-              contentTargetId: newAnswer.id,
+              targetUserId: questionTarget.userId,
+              targetEntityType: TargetEntityType.ANSWER ,
+              targetEntityId: newAnswer.id,
               content: `Your question "${questionTarget.title}" has a new answer from ${userName}`,
             },
           }); 
@@ -84,6 +82,20 @@ const voteAnswer = async (req, res) => {
   
       if (!parsedAnswerId || isUpvote === undefined) {
         return res.status(400).json({ message: "Invalid input parameters" });
+      }
+       // Fetch the answer and its owner
+       const answer = await prisma.answer.findUnique({
+        where: { id: parsedAnswerId },
+        select: {
+          userId: true,
+          question: {
+            select: { id: true, title: true },
+          },
+        },
+      });
+  
+      if (!answer) {
+        return res.status(404).json({ message: "Answer not found" });
       }
 
       const existingVote = await prisma.vote.findUnique({
@@ -120,36 +132,18 @@ const voteAnswer = async (req, res) => {
         voteAction = "created";
       }
   
-      // Fetch the answer and its owner
-      const answer = await prisma.answer.findUnique({
-        where: { id: parsedAnswerId },
-        select: {
-          userId: true,
-          question: {
-            select: { id: true, title: true },
-          },
-        },
-      });
-  
-      if (!answer) {
-        return res.status(404).json({ message: "Answer not found" });
-      }
-     // Send a notification only if the voter is not the answer owner
-      if (answer.userId !== userId) {
+    
         await prisma.notification.create({
           data: {
-            fromUserId: userId,
-            type: NotificationType.NEW_VOTE, 
-            userTargetId: answer.userId,
-            metaData: JSON.stringify({
-                fromUserId: userId,
-                answerId: parsedAnswerId,
-                questionId: answer.question.id,
-            }),
+            actorId: userId,
+            type : NotificationType.NEW_VOTE ,
+            targetUserId: answer.userId,
+            targetEntityType: TargetEntityType.ANSWER,
+            targetEntityId: parsedAnswerId,
             content: `Your answer on the question "${answer.question.title}" has received a ${isUpvote === "true" ? "new upvote" : "new downvote"}.`,
           },
         });
-      }
+      
   
       return res
         .status(201)

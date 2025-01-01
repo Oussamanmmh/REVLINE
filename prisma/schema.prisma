@@ -33,12 +33,12 @@ model User {
     answers Answer []
     badges Badge []
     userBadges UserBadge []
-    notifications Notification []
+    actorNotifications Notification[] @relation("ActorNotifications")
     sentMessages Message[] @relation("SentMessages")
     receivedMessages Message[] @relation("ReceivedMessages")
     votes Vote[]
     searchLogs SearchLog[]
-    notificationsFromUser Notification[] @relation("NotificationFromUser")
+    tragetUserNotifications Notification[] @relation("TargetUserNotifications")
 }
 
 //type of notification
@@ -47,19 +47,29 @@ enum NotificationType {
     NEW_BADGE
     NEW_VOTE
 }
-//Notification model
-model Notification{
-    id Int @id @default(autoincrement())
-    type NotificationType
-    content String
-    metaData Json?
-    fromUserId Int?
-    fromUser User? @relation("NotificationFromUser",fields: [fromUserId], references: [id] ,onDelete: Cascade)
-    contentTargetId Int ?
-    userTargetId Int
-    user User @relation(fields: [userTargetId], references: [id] ,onDelete: Cascade)
-    createdAt DateTime @default(now())
-    isRead Boolean @default(false)
+// Notification model
+model Notification {
+  id              Int             @id @default(autoincrement())
+  type            NotificationType
+  content         String
+  metaData        Json?           // Optional extra data for flexibility
+  actorId         Int?            // The user who triggered the notification
+  actor           User?           @relation("ActorNotifications", fields: [actorId], references: [id], onDelete: Cascade)
+  targetUserId    Int            // The user who receives the notification
+  targetUser      User            @relation("TargetUserNotifications", fields: [targetUserId], references: [id], onDelete: Cascade)
+  targetEntityId  Int?            // ID of the entity related to the notification (e.g., answer, question, etc.)
+  targetEntityType TargetEntityType? // Enum for type of the related entity
+  isRead          Boolean         @default(false)
+  createdAt       DateTime        @default(now())
+}
+
+// Enum for entity types involved in notifications
+enum TargetEntityType {
+  QUESTION
+  ANSWER
+  VOTE
+  BADGE
+  MESSAGE
 }
 
 //Message model
