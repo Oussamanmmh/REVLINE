@@ -9,6 +9,7 @@ const cookieParser = require('cookie-parser');
 const passport = require('passport');
 const session = require('express-session');
 const prisma = require('./prismaClient')
+const admin = require('./prisma/admin').default
 require('./src/middlewares/passportSetup')
 
 //Routes import

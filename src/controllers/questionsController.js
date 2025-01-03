@@ -79,7 +79,6 @@ const removeVote = async(req,res)=>{
     }
 }
 
-
 //Get all the questions
 const getAllQuestions=async(req,res)=>{
     try{

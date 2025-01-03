@@ -8,7 +8,7 @@ const sendConfirmationEmail = async (email, token) => {
         to : email,
         subject : 'Confirm your address email',
         html : `<h1>Click on the link below to confirm your email</h1>
-               <a href="http://localhost:3000/api/auth/email-confirmation/${token}"}>Confirme Your Address Email</a>`
+               <a href="http://localhost:3000/auth/email-confirmation/${token}"}>Confirme Your Address Email</a>`
     };
     try {
         await transporter.sendMail(mailOptions);
